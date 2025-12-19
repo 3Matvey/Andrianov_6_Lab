@@ -41,6 +41,18 @@
                                 <option value="public">Public</option>
                             </select>
                         </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="anonymous" name="anonymous" checked>
+                            <label class="form-check-label" for="anonymous">Anonymous voting</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="multiSelect" name="multiSelect">
+                            <label class="form-check-label" for="multiSelect">Allow multiple choices</label>
+                        </div>
+                        <div class="mb-3 mt-2">
+                            <label for="maxChoices" class="form-label">Max choices (for multi-select)</label>
+                            <input type="number" class="form-control" id="maxChoices" name="maxChoices" value="1" min="1">
+                        </div>
                         <button type="submit" class="btn btn-primary">Create Session</button>
                     </form>
                 </div>

@@ -17,14 +17,16 @@ public class AddCandidateModel : PageModel
     }
 
     public VotingSession? Session { get; set; }
+    public List<CandidateType> CandidateTypes { get; set; } = new();
 
     public async Task<IActionResult> OnGetAsync(Guid id)
     {
-        Session = await _votingService.GetSessionWithCandidatesAsync(id);
+        Session = await _votingService.GetSessionWithCandidatesAsync(id, includeUnpublished: true);
         if (Session == null)
         {
             return NotFound();
         }
+        CandidateTypes = await _votingService.GetCandidateTypesAsync();
         return Page();
     }
 

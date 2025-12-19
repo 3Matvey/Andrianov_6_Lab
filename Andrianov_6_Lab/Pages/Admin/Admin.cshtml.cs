@@ -7,9 +7,9 @@ using Andrianov_6_Lab.Models;
 namespace Andrianov_6_Lab.Pages.Admin;
 
 [Authorize]
-public class AdminModel : PageModel
-{
-    private readonly VotingService _votingService;
+    public class AdminModel : PageModel
+    {
+        private readonly VotingService _votingService;
 
     public AdminModel(VotingService votingService)
     {
@@ -20,31 +20,17 @@ public class AdminModel : PageModel
 
     public async Task OnGetAsync()
     {
-        // Get all sessions (including unpublished for admin)
-        var sql = "SELECT id, title, description, created_by, start_at, end_at, is_published, visibility, created_at FROM voting.voting_sessions ORDER BY created_at DESC";
-        var results = await _votingService.ExecuteRawQueryAsync(sql);
-        Sessions = results.Select(r => new VotingSession
-        {
-            Id = Guid.Parse(r["id"]?.ToString() ?? ""),
-            Title = r["title"]?.ToString() ?? "",
-            Description = r["description"]?.ToString(),
-            CreatedBy = Guid.Parse(r["created_by"]?.ToString() ?? ""),
-            StartAt = DateTime.Parse(r["start_at"]?.ToString() ?? ""),
-            EndAt = DateTime.Parse(r["end_at"]?.ToString() ?? ""),
-            IsPublished = bool.Parse(r["is_published"]?.ToString() ?? "false"),
-            Visibility = r["visibility"]?.ToString() ?? "private",
-            CreatedAt = DateTime.Parse(r["created_at"]?.ToString() ?? "")
-        }).ToList();
+        Sessions = await _votingService.GetAllSessionsAsync();
     }
 
-    public async Task<IActionResult> OnPostCreateSessionAsync(string title, string description, DateTime startAt, DateTime endAt, string visibility)
+    public async Task<IActionResult> OnPostCreateSessionAsync(string title, string description, DateTime startAt, DateTime endAt, string visibility, bool anonymous, bool multiSelect, int maxChoices)
     {
         try
         {
             var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(userIdClaim)) return Challenge();
             var adminId = Guid.Parse(userIdClaim);
-            await _votingService.CreateSessionAsync(title, description, adminId, startAt, endAt, visibility);
+            await _votingService.CreateSessionAsync(title, description, adminId, startAt, endAt, visibility, anonymous, multiSelect, maxChoices);
             TempData["Message"] = "Session created successfully!";
         }
         catch (Exception ex)
