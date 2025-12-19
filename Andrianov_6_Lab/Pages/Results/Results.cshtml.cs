@@ -30,9 +30,8 @@ public class ResultsModel : PageModel
         // Calculate vote counts for each candidate
         if (Session.Candidates.Any())
         {
-            var candidateIds = string.Join(",", Session.Candidates.Select(c => $"'{c.Id}'"));
-            var sql = $"SELECT candidate_id, COUNT(*) as vote_count FROM voting.votes WHERE candidate_id IN ({candidateIds}) AND is_valid = TRUE GROUP BY candidate_id";
-            var voteResults = await _votingService.ExecuteRawQueryAsync(sql);
+            var idsArray = Session.Candidates.Select(c => c.Id).ToArray();
+            var voteResults = await _votingService.GetVoteCountsAsync(idsArray);
 
             foreach (var candidate in Session.Candidates)
             {
