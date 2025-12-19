@@ -6,7 +6,7 @@ using Andrianov_6_Lab.Models;
 
 namespace Andrianov_6_Lab.Pages.Admin;
 
-[Authorize]
+[Authorize(Roles = "ADMIN")]
 public class AddCandidateModel : PageModel
 {
     private readonly VotingService _votingService;
