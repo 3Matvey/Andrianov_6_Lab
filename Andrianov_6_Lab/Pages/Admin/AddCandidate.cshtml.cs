@@ -43,4 +43,18 @@ public class AddCandidateModel : PageModel
         }
         return RedirectToPage(new { id });
     }
+
+    public async Task<IActionResult> OnPostUpdateAsync(Guid id, Guid candidateId, string fullName, string description, string candidateType)
+    {
+        await _votingService.UpdateCandidateAsync(candidateId, candidateType, fullName, description);
+        TempData["Message"] = "Candidate updated.";
+        return RedirectToPage(new { id });
+    }
+
+    public async Task<IActionResult> OnPostDeleteAsync(Guid id, Guid candidateId)
+    {
+        await _votingService.DeleteCandidateAsync(candidateId);
+        TempData["Message"] = "Candidate removed.";
+        return RedirectToPage(new { id });
+    }
 }
