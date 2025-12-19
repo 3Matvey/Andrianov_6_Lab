@@ -1,0 +1,45 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Voting System";
+}
+
+<div class="container">
+    <h1 class="text-center mb-4">Voting Sessions</h1>
+
+    @if (Model.Sessions.Any())
+    {
+        <div class="row">
+            @foreach (var session in Model.Sessions)
+            {
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">@session.Title</h5>
+                            @if (!string.IsNullOrEmpty(session.Description))
+                            {
+                                <p class="card-text">@session.Description</p>
+                            }
+                            <p class="text-muted">
+                                Start: @session.StartAt.ToString("g")<br>
+                                End: @session.EndAt.ToString("g")
+                            </p>
+                            <a href="/Vote/@session.Id" class="btn btn-primary">Vote</a>
+                            <a href="/Results/@session.Id" class="btn btn-secondary">Results</a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info text-center">
+            No active voting sessions available.
+        </div>
+    }
+
+    <div class="text-center mt-4">
+        <a href="/Admin" class="btn btn-outline-primary">Admin Panel</a>
+    </div>
+</div>

@@ -1,0 +1,57 @@
+@page "{id}"
+@model ResultsModel
+@{
+    ViewData["Title"] = "Results";
+}
+
+@if (Model.Session == null)
+{
+    <div class="alert alert-danger">Voting session not found.</div>
+}
+else
+{
+    <div class="container">
+        <h1>Results: @Model.Session.Title</h1>
+
+        @if (Model.Results != null)
+        {
+            <div class="row">
+                <div class="col-md-8">
+                    <h3>Candidates</h3>
+                    <div class="list-group">
+                        @foreach (var candidate in Model.Session.Candidates)
+                        {
+                            <div class="list-group-item">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h5 class="mb-1">@candidate.FullName</h5>
+                                    <small>@candidate.VoteCount votes</small>
+                                </div>
+                                @if (!string.IsNullOrEmpty(candidate.Description))
+                                {
+                                    <p class="mb-1">@candidate.Description</p>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">Summary</div>
+                        <div class="card-body">
+                            <p><strong>Total Votes:</strong> @Model.Results.TotalVotes</p>
+                            <p><strong>Generated:</strong> @Model.Results.GeneratedAt.ToString("g")</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-info">Results not yet available.</div>
+        }
+
+        <div class="mt-3">
+            <a href="/" class="btn btn-primary">Back to Sessions</a>
+        </div>
+    </div>
+}

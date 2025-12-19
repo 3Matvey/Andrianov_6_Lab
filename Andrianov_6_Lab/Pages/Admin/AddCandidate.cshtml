@@ -1,0 +1,51 @@
+@page "{id}"
+@model AddCandidateModel
+@{
+    ViewData["Title"] = "Add Candidate";
+}
+
+<div class="container">
+    <h1>Add Candidate to @Model.Session?.Title</h1>
+
+    @if (TempData["Message"] != null)
+    {
+        <div class="alert alert-success">@TempData["Message"]</div>
+    }
+
+    <form method="post">
+        <div class="mb-3">
+            <label for="fullName" class="form-label">Full Name</label>
+            <input type="text" class="form-control" id="fullName" name="fullName" required>
+        </div>
+        <div class="mb-3">
+            <label for="description" class="form-label">Description</label>
+            <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+        </div>
+        <div class="mb-3">
+            <label for="candidateType" class="form-label">Type</label>
+            <select class="form-control" id="candidateType" name="candidateType">
+                <option value="PERSON">Person</option>
+                <option value="OPTION">Option</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Add Candidate</button>
+        <a href="/Admin" class="btn btn-secondary">Back to Admin</a>
+    </form>
+
+    @if (Model.Session?.Candidates.Any() == true)
+    {
+        <h3 class="mt-4">Current Candidates</h3>
+        <ul class="list-group">
+            @foreach (var candidate in Model.Session.Candidates)
+            {
+                <li class="list-group-item">
+                    <strong>@candidate.FullName</strong> (@candidate.Type?.Code)
+                    @if (!string.IsNullOrEmpty(candidate.Description))
+                    {
+                        <br><small>@candidate.Description</small>
+                    }
+                </li>
+            }
+        </ul>
+    }
+</div>

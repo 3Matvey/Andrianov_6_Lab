@@ -1,0 +1,42 @@
+@page
+@model Andrianov_6_Lab.Pages.Db.QueriesModel
+@{
+    ViewData["Title"] = "DB Queries";
+}
+
+<h2>SQL Scripts</h2>
+
+<form method="post">
+    <select asp-for="SelectedScript" asp-items="Model.ScriptFilesSelect" style="width:100%">
+        <option value="">-- Select script --</option>
+    </select>
+    <div style="margin-top:8px">
+        <button type="submit" class="btn btn-primary">Run</button>
+    </div>
+</form>
+
+@if (Model.LastResults != null && Model.LastResults.Any())
+{
+    <h3>Results</h3>
+    <table class="table table-sm table-striped">
+        <thead>
+            <tr>
+                @foreach (var col in Model.Columns)
+                {
+                    <th>@col</th>
+                }
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var row in Model.LastResults)
+            {
+                <tr>
+                    @foreach (var col in Model.Columns)
+                    {
+                        <td>@(row.ContainsKey(col) ? (row[col]?.ToString() ?? "") : "")</td>
+                    }
+                </tr>
+            }
+        </tbody>
+    </table>
+}

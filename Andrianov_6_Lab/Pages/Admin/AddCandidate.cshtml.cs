@@ -1,0 +1,44 @@
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Authorization;
+using Andrianov_6_Lab.Services;
+using Andrianov_6_Lab.Models;
+
+namespace Andrianov_6_Lab.Pages.Admin;
+
+[Authorize]
+public class AddCandidateModel : PageModel
+{
+    private readonly VotingService _votingService;
+
+    public AddCandidateModel(VotingService votingService)
+    {
+        _votingService = votingService;
+    }
+
+    public VotingSession? Session { get; set; }
+
+    public async Task<IActionResult> OnGetAsync(Guid id)
+    {
+        Session = await _votingService.GetSessionWithCandidatesAsync(id);
+        if (Session == null)
+        {
+            return NotFound();
+        }
+        return Page();
+    }
+
+    public async Task<IActionResult> OnPostAsync(Guid id, string fullName, string description, string candidateType)
+    {
+        try
+        {
+            await _votingService.AddCandidateAsync(id, candidateType, fullName, description);
+            TempData["Message"] = "Candidate added successfully!";
+        }
+        catch (Exception ex)
+        {
+            TempData["Message"] = $"Error: {ex.Message}";
+        }
+        return RedirectToPage(new { id });
+    }
+}

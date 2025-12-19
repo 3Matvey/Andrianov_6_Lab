@@ -1,0 +1,91 @@
+@page
+@model AdminModel
+@{
+    ViewData["Title"] = "Admin Panel";
+}
+
+<div class="container">
+    <h1>Admin Panel</h1>
+
+    @if (TempData["Message"] != null)
+    {
+        <div class="alert alert-success">@TempData["Message"]</div>
+    }
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">Create Voting Session</div>
+                <div class="card-body">
+                    <form method="post" asp-page-handler="CreateSession">
+                        <div class="mb-3">
+                            <label for="title" class="form-label">Title</label>
+                            <input type="text" class="form-control" id="title" name="title" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description</label>
+                            <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="startAt" class="form-label">Start Date & Time</label>
+                            <input type="datetime-local" class="form-control" id="startAt" name="startAt" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="endAt" class="form-label">End Date & Time</label>
+                            <input type="datetime-local" class="form-control" id="endAt" name="endAt" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="visibility" class="form-label">Visibility</label>
+                            <select class="form-control" id="visibility" name="visibility">
+                                <option value="private">Private</option>
+                                <option value="public">Public</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Create Session</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">Manage Sessions</div>
+                <div class="card-body">
+                    @if (Model.Sessions.Any())
+                    {
+                        <div class="list-group">
+                            @foreach (var session in Model.Sessions)
+                            {
+                                <div class="list-group-item">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h5 class="mb-1">@session.Title</h5>
+                                        <small>@(session.IsPublished ? "Published" : "Draft")</small>
+                                    </div>
+                                    <p class="mb-1">@session.StartAt.ToString("g") - @session.EndAt.ToString("g")</p>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="/Admin/AddCandidate/@session.Id" class="btn btn-outline-primary">Add Candidate</a>
+                                        @if (!session.IsPublished)
+                                        {
+                                            <form method="post" asp-page-handler="PublishSession" style="display:inline;">
+                                                <input type="hidden" name="sessionId" value="@session.Id">
+                                                <button type="submit" class="btn btn-outline-success">Publish</button>
+                                            </form>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <p>No sessions found.</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <a href="/" class="btn btn-secondary">Back to Home</a>
+    </div>
+</div>
