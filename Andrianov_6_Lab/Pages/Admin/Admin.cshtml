@@ -74,8 +74,9 @@
                                         <small>@(session.IsPublished ? "Published" : "Draft")</small>
                                     </div>
                                     <p class="mb-1">@session.StartAt.ToString("g") - @session.EndAt.ToString("g")</p>
-                                    <div class="btn-group btn-group-sm">
+                                    <div class="btn-group btn-group-sm mb-2">
                                         <a href="/Admin/AddCandidate/@session.Id" class="btn btn-outline-primary">Add Candidate</a>
+                                        <a href="/Admin/EditSession/@session.Id" class="btn btn-outline-secondary">Edit</a>
                                         @if (!session.IsPublished)
                                         {
                                             <form method="post" asp-page-handler="PublishSession" style="display:inline;">
@@ -84,6 +85,10 @@
                                             </form>
                                         }
                                     </div>
+                                    <form method="post" asp-page-handler="DeleteSession" onsubmit="return confirm('Delete this session?');">
+                                        <input type="hidden" name="sessionId" value="@session.Id" />
+                                        <button type="submit" class="btn btn-outline-danger btn-sm">Delete</button>
+                                    </form>
                                 </div>
                             }
                         </div>
@@ -91,6 +96,112 @@
                     else
                     {
                         <p>No sessions found.</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card mb-4">
+                <div class="card-header">Manage Users</div>
+                <div class="card-body">
+                    <h5>Create User</h5>
+                    <form class="row g-3" method="post" asp-page-handler="CreateUser">
+                        <div class="col-md-3">
+                            <label class="form-label" for="email">Email</label>
+                            <input class="form-control" id="email" name="email" required />
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label" for="password">Password</label>
+                            <input type="password" class="form-control" id="password" name="password" required />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label" for="fullName">Full name</label>
+                            <input class="form-control" id="fullName" name="fullName" required />
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label" for="roleId">Role</label>
+                            <select class="form-select" id="roleId" name="roleId">
+                                @foreach (var role in Model.Roles)
+                                {
+                                    <option value="@role.Id">@role.Name (@role.Code)</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label" for="statusId">Status</label>
+                            <select class="form-select" id="statusId" name="statusId">
+                                @foreach (var status in Model.Statuses)
+                                {
+                                    <option value="@status.Id">@status.Name</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-primary">Create</button>
+                        </div>
+                    </form>
+
+                    <hr />
+                    <h5>Existing Users</h5>
+                    @if (Model.Users.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-striped align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>Email</th>
+                                        <th>Full Name</th>
+                                        <th>Role</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var user in Model.Users)
+                                    {
+                                        <tr>
+                                            <td>@user.Email</td>
+                                            <td>
+                                                <input class="form-control" name="fullName" value="@user.FullName" form="update-@user.Id" />
+                                            </td>
+                                            <td>
+                                                <select class="form-select" name="roleId" form="update-@user.Id">
+                                                    @foreach (var role in Model.Roles)
+                                                    {
+                                                        <option value="@role.Id" selected="@(role.Id == user.RoleId)">@role.Name</option>
+                                                    }
+                                                </select>
+                                            </td>
+                                            <td>
+                                                <select class="form-select" name="statusId" form="update-@user.Id">
+                                                    @foreach (var status in Model.Statuses)
+                                                    {
+                                                        <option value="@status.Id" selected="@(status.Id == user.StatusId)">@status.Name</option>
+                                                    }
+                                                </select>
+                                            </td>
+                                            <td class="d-flex gap-2">
+                                                <form id="update-@user.Id" method="post" asp-page-handler="UpdateUser" class="d-flex gap-2">
+                                                    <input type="hidden" name="userId" value="@user.Id" />
+                                                    <button type="submit" class="btn btn-success btn-sm">Save</button>
+                                                </form>
+                                                <form method="post" asp-page-handler="DeleteUser" onsubmit="return confirm('Delete this user?');">
+                                                    <input type="hidden" name="userId" value="@user.Id" />
+                                                    <button type="submit" class="btn btn-outline-danger btn-sm">Delete</button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <p>No users found.</p>
                     }
                 </div>
             </div>

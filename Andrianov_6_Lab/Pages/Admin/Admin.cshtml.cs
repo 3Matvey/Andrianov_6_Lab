@@ -17,6 +17,9 @@ namespace Andrianov_6_Lab.Pages.Admin;
     }
 
     public List<VotingSession> Sessions { get; set; } = new();
+    public List<User> Users { get; set; } = new();
+    public List<Role> Roles { get; set; } = new();
+    public List<UserStatus> Statuses { get; set; } = new();
 
     public async Task OnGetAsync()
     {

@@ -41,11 +41,32 @@
             @foreach (var candidate in Model.Session.Candidates)
             {
                 <li class="list-group-item">
-                    <strong>@candidate.FullName</strong> (@candidate.Type?.Code)
-                    @if (!string.IsNullOrEmpty(candidate.Description))
-                    {
-                        <br><small>@candidate.Description</small>
-                    }
+                    <form class="row g-2 align-items-center" method="post" asp-page-handler="Update">
+                        <input type="hidden" name="id" value="@Model.Session.Id" />
+                        <input type="hidden" name="candidateId" value="@candidate.Id" />
+                        <div class="col-md-3">
+                            <input class="form-control" name="fullName" value="@candidate.FullName" />
+                        </div>
+                        <div class="col-md-3">
+                            <input class="form-control" name="description" value="@candidate.Description" />
+                        </div>
+                        <div class="col-md-2">
+                            <select class="form-select" name="candidateType">
+                                @foreach (var type in Model.CandidateTypes)
+                                {
+                                    <option value="@type.Code" selected="@(type.Code == candidate.Type?.Code)">@type.Name</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-success btn-sm">Save</button>
+                        </div>
+                    </form>
+                    <form class="mt-2" method="post" asp-page-handler="Delete" onsubmit="return confirm('Delete this candidate?');">
+                        <input type="hidden" name="id" value="@Model.Session.Id" />
+                        <input type="hidden" name="candidateId" value="@candidate.Id" />
+                        <button type="submit" class="btn btn-outline-danger btn-sm">Delete</button>
+                    </form>
                 </li>
             }
         </ul>
