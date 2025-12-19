@@ -7,9 +7,9 @@ using Andrianov_6_Lab.Models;
 namespace Andrianov_6_Lab.Pages.Admin;
 
 [Authorize]
-public class AdminModel : PageModel
-{
-    private readonly VotingService _votingService;
+    public class AdminModel : PageModel
+    {
+        private readonly VotingService _votingService;
 
     public AdminModel(VotingService votingService)
     {
