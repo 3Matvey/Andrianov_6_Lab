@@ -6,7 +6,7 @@ using Andrianov_6_Lab.Models;
 
 namespace Andrianov_6_Lab.Pages.Admin;
 
-[Authorize]
+[Authorize(Roles = "ADMIN")]
 public class AdminModel : PageModel
 {
     private readonly VotingService _votingService;
@@ -17,34 +17,26 @@ public class AdminModel : PageModel
     }
 
     public List<VotingSession> Sessions { get; set; } = new();
+    public List<User> Users { get; set; } = new();
+    public List<Role> Roles { get; set; } = new();
+    public List<UserStatus> Statuses { get; set; } = new();
 
     public async Task OnGetAsync()
     {
-        // Get all sessions (including unpublished for admin)
-        var sql = "SELECT id, title, description, created_by, start_at, end_at, is_published, visibility, created_at FROM voting.voting_sessions ORDER BY created_at DESC";
-        var results = await _votingService.ExecuteRawQueryAsync(sql);
-        Sessions = results.Select(r => new VotingSession
-        {
-            Id = Guid.Parse(r["id"]?.ToString() ?? ""),
-            Title = r["title"]?.ToString() ?? "",
-            Description = r["description"]?.ToString(),
-            CreatedBy = Guid.Parse(r["created_by"]?.ToString() ?? ""),
-            StartAt = DateTime.Parse(r["start_at"]?.ToString() ?? ""),
-            EndAt = DateTime.Parse(r["end_at"]?.ToString() ?? ""),
-            IsPublished = bool.Parse(r["is_published"]?.ToString() ?? "false"),
-            Visibility = r["visibility"]?.ToString() ?? "private",
-            CreatedAt = DateTime.Parse(r["created_at"]?.ToString() ?? "")
-        }).ToList();
+        Sessions = await _votingService.GetAllSessionsAsync();
+        Users = await _votingService.GetAllUsersAsync();
+        Roles = await _votingService.GetRolesAsync();
+        Statuses = await _votingService.GetUserStatusesAsync();
     }
 
-    public async Task<IActionResult> OnPostCreateSessionAsync(string title, string description, DateTime startAt, DateTime endAt, string visibility)
+    public async Task<IActionResult> OnPostCreateSessionAsync(string title, string description, DateTime startAt, DateTime endAt, string visibility, bool anonymous, bool multiSelect, int maxChoices)
     {
         try
         {
             var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(userIdClaim)) return Challenge();
             var adminId = Guid.Parse(userIdClaim);
-            await _votingService.CreateSessionAsync(title, description, adminId, startAt, endAt, visibility);
+            await _votingService.CreateSessionAsync(title, description, adminId, startAt, endAt, visibility, anonymous, multiSelect, maxChoices);
             TempData["Message"] = "Session created successfully!";
         }
         catch (Exception ex)
@@ -60,6 +52,81 @@ public class AdminModel : PageModel
         {
             await _votingService.PublishSessionAsync(sessionId);
             TempData["Message"] = "Session published successfully!";
+        }
+        catch (Exception ex)
+        {
+            TempData["Message"] = $"Error: {ex.Message}";
+        }
+        return RedirectToPage();
+    }
+
+    public async Task<IActionResult> OnPostUpdateSessionAsync(Guid sessionId, string title, string description, DateTime startAt, DateTime endAt, string visibility, bool anonymous, bool multiSelect, int maxChoices)
+    {
+        try
+        {
+            await _votingService.UpdateSessionAsync(sessionId, title, description, startAt, endAt, visibility, anonymous, multiSelect, maxChoices);
+            TempData["Message"] = "Session updated successfully!";
+        }
+        catch (Exception ex)
+        {
+            TempData["Message"] = $"Error: {ex.Message}";
+        }
+        return RedirectToPage();
+    }
+
+    public async Task<IActionResult> OnPostDeleteSessionAsync(Guid sessionId)
+    {
+        try
+        {
+            await _votingService.DeleteSessionAsync(sessionId);
+            TempData["Message"] = "Session deleted.";
+        }
+        catch (Exception ex)
+        {
+            TempData["Message"] = $"Error: {ex.Message}";
+        }
+        return RedirectToPage();
+    }
+
+    public async Task<IActionResult> OnPostCreateUserAsync(string email, string password, string fullName, Guid roleId, Guid statusId)
+    {
+        try
+        {
+            await _votingService.RegisterUserAsync(email, password, fullName);
+            var created = await _votingService.GetUserByEmailAsync(email);
+            if (created != null)
+            {
+                await _votingService.UpdateUserAsync(created.Id, fullName, roleId, statusId);
+            }
+            TempData["Message"] = "User created successfully.";
+        }
+        catch (Exception ex)
+        {
+            TempData["Message"] = $"Error: {ex.Message}";
+        }
+        return RedirectToPage();
+    }
+
+    public async Task<IActionResult> OnPostUpdateUserAsync(Guid userId, string fullName, Guid roleId, Guid statusId)
+    {
+        try
+        {
+            await _votingService.UpdateUserAsync(userId, fullName, roleId, statusId);
+            TempData["Message"] = "User updated successfully.";
+        }
+        catch (Exception ex)
+        {
+            TempData["Message"] = $"Error: {ex.Message}";
+        }
+        return RedirectToPage();
+    }
+
+    public async Task<IActionResult> OnPostDeleteUserAsync(Guid userId)
+    {
+        try
+        {
+            await _votingService.DeleteUserAsync(userId);
+            TempData["Message"] = "User deleted.";
         }
         catch (Exception ex)
         {

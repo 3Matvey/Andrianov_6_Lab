@@ -1,4 +1,5 @@
 using System.Data;
+using System.Linq;
 using Npgsql;
 namespace Andrianov_6_Lab.Services;
 
@@ -46,12 +47,16 @@ public class RawSqlExecutor
         return Path.GetFullPath(Path.Combine(baseDir, _scriptsPath));
     }
 
-    public async Task<List<Dictionary<string, object?>>> ExecuteQueryAsync(string sql)
+    public async Task<List<Dictionary<string, object?>>> ExecuteQueryAsync(string sql, params NpgsqlParameter[] parameters)
     {
         var rows = new List<Dictionary<string, object?>>();
         await using var conn = new NpgsqlConnection(_connectionString);
         await conn.OpenAsync();
         await using var cmd = new NpgsqlCommand(sql, conn);
+        if (parameters?.Length > 0)
+        {
+            cmd.Parameters.AddRange(parameters);
+        }
         cmd.CommandTimeout = 60;
         try
         {
@@ -73,5 +78,36 @@ public class RawSqlExecutor
             await conn.CloseAsync();
         }
         return rows;
+    }
+
+    public async Task<int> ExecuteNonQueryAsync(string sql, params NpgsqlParameter[] parameters)
+    {
+        await using var conn = new NpgsqlConnection(_connectionString);
+        await conn.OpenAsync();
+        await using var cmd = new NpgsqlCommand(sql, conn);
+        if (parameters?.Length > 0)
+        {
+            cmd.Parameters.AddRange(parameters);
+        }
+        cmd.CommandTimeout = 60;
+        try
+        {
+            return await cmd.ExecuteNonQueryAsync();
+        }
+        finally
+        {
+            await conn.CloseAsync();
+        }
+    }
+
+    public async Task<int> ExecuteProcedureAsync(string procedureName, params NpgsqlParameter[] parameters)
+    {
+        var placeholders = parameters.Any()
+            ? string.Join(",", parameters.Select(p => $"@{p.ParameterName}"))
+            : string.Empty;
+        var sql = parameters.Any()
+            ? $"CALL {procedureName}({placeholders})"
+            : $"CALL {procedureName}()";
+        return await ExecuteNonQueryAsync(sql, parameters);
     }
 }
