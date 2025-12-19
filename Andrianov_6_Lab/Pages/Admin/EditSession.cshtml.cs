@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace Andrianov_6_Lab.Pages.Admin;
 
-[Authorize(Roles = "ADMIN")]
+[Authorize]
 public class EditSessionModel : PageModel
 {
     private readonly VotingService _votingService;
