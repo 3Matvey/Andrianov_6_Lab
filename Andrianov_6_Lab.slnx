@@ -4,7 +4,7 @@
     <File Path="../create_voting.sql" />
     <File Path="../insert.sql" />
     <File Path="../pull_of_requests.sql" />
-    <File Path="../pull_of_triggers_procedures.sql" />
+    <File Path="../pull_of_triggers_procedures.txt" />
   </Folder>
   <Project Path="Andrianov_6_Lab/Andrianov_6_Lab.csproj" />
 </Solution>
