@@ -24,8 +24,10 @@
         <div class="mb-3">
             <label for="candidateType" class="form-label">Type</label>
             <select class="form-control" id="candidateType" name="candidateType">
-                <option value="PERSON">Person</option>
-                <option value="OPTION">Option</option>
+                @foreach (var type in Model.CandidateTypes)
+                {
+                    <option value="@type.Code">@type.Name (@type.Code)</option>
+                }
             </select>
         </div>
         <button type="submit" class="btn btn-primary">Add Candidate</button>
