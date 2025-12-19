@@ -1,4 +1,4 @@
-@page "{id}"
+@page "/Vote/{id}"
 @model VoteModel
 @{
     ViewData["Title"] = "Vote";
@@ -20,6 +20,7 @@ else
         <div class="row">
             <div class="col-md-8">
                 <form method="post">
+                    <div asp-validation-summary="All" class="text-danger"></div>
                     <h3>Select your choice(s)</h3>
                     @if (Model.Session.Settings?.MultiSelect == true)
                     {

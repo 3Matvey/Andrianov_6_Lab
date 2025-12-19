@@ -17,14 +17,16 @@ public class AddCandidateModel : PageModel
     }
 
     public VotingSession? Session { get; set; }
+    public List<CandidateType> CandidateTypes { get; set; } = new();
 
     public async Task<IActionResult> OnGetAsync(Guid id)
     {
-        Session = await _votingService.GetSessionWithCandidatesAsync(id);
+        Session = await _votingService.GetSessionWithCandidatesAsync(id, includeUnpublished: true);
         if (Session == null)
         {
             return NotFound();
         }
+        CandidateTypes = await _votingService.GetCandidateTypesAsync();
         return Page();
     }
 
@@ -39,6 +41,20 @@ public class AddCandidateModel : PageModel
         {
             TempData["Message"] = $"Error: {ex.Message}";
         }
+        return RedirectToPage(new { id });
+    }
+
+    public async Task<IActionResult> OnPostUpdateAsync(Guid id, Guid candidateId, string fullName, string description, string candidateType)
+    {
+        await _votingService.UpdateCandidateAsync(candidateId, candidateType, fullName, description);
+        TempData["Message"] = "Candidate updated.";
+        return RedirectToPage(new { id });
+    }
+
+    public async Task<IActionResult> OnPostDeleteAsync(Guid id, Guid candidateId)
+    {
+        await _votingService.DeleteCandidateAsync(candidateId);
+        TempData["Message"] = "Candidate removed.";
         return RedirectToPage(new { id });
     }
 }

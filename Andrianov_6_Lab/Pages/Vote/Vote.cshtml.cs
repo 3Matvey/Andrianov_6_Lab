@@ -39,6 +39,18 @@ public class VoteModel : PageModel
             return NotFound();
         }
 
+        if (Session.Settings?.MultiSelect == true && SelectedCandidates.Count > Session.Settings.MaxChoices)
+        {
+            ModelState.AddModelError(string.Empty, $"You can select no more than {Session.Settings.MaxChoices} candidates.");
+            return Page();
+        }
+
+        if (Session.Settings?.MultiSelect != true && SelectedCandidate == Guid.Empty)
+        {
+            ModelState.AddModelError(string.Empty, "Please select a candidate.");
+            return Page();
+        }
+
         // Use authenticated user id if available
         var userIdStr = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
         Guid userId = Guid.Empty;
