@@ -1,3 +1,10 @@
 <Solution>
+  <Folder Name="/Solution Items/">
+    <File Path="../complex_requests.sql" />
+    <File Path="../create_voting.sql" />
+    <File Path="../insert.sql" />
+    <File Path="../pull_of_requests.sql" />
+    <File Path="../pull_of_triggers_procedures.sql" />
+  </Folder>
   <Project Path="Andrianov_6_Lab/Andrianov_6_Lab.csproj" />
 </Solution>
