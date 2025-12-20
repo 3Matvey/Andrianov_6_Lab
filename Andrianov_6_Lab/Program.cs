@@ -1,7 +1,10 @@
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddRazorPages();
+builder.Services.AddRazorPages(options =>
+{
+    options.Conventions.AuthorizeFolder("/Admin", "AdminOnly");
+});
 // Register raw SQL executor service
 builder.Services.AddSingleton<Andrianov_6_Lab.Services.RawSqlExecutor>(sp =>
 {
@@ -18,7 +21,10 @@ builder.Services.AddAuthentication("Cookies").AddCookie("Cookies", opts =>
     opts.LoginPath = "/Account/Login";
     opts.AccessDeniedPath = "/Account/Login";
 });
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("AdminOnly", policy => policy.RequireRole("ADMIN"));
+});
 
 var app = builder.Build();
 

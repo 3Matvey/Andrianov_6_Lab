@@ -28,16 +28,19 @@ public class LoginModel : PageModel
 
     public async Task<IActionResult> OnPostAsync()
     {
-        if (string.IsNullOrWhiteSpace(Email) || string.IsNullOrWhiteSpace(Password))
+        var normalizedEmail = Email.Trim();
+
+        if (string.IsNullOrWhiteSpace(normalizedEmail) || string.IsNullOrWhiteSpace(Password))
         {
             ErrorMessage = "Email and password are required.";
             return Page();
         }
 
-        var user = await _votingService.GetUserByEmailAsync(Email.Trim());
+        var user = await _votingService.GetUserByEmailAsync(normalizedEmail);
         if (user == null)
         {
             ErrorMessage = "Invalid credentials.";
+            await _votingService.LogAuthenticationAsync("LOGIN_FAILED", normalizedEmail, null, new { reason = "user_not_found" });
             return Page();
         }
 
@@ -45,6 +48,7 @@ public class LoginModel : PageModel
         if (user.PasswordHash != Password)
         {
             ErrorMessage = "Invalid credentials.";
+            await _votingService.LogAuthenticationAsync("LOGIN_FAILED", normalizedEmail, user.Id, new { reason = "invalid_password" });
             return Page();
         }
 
@@ -59,6 +63,7 @@ public class LoginModel : PageModel
         var principal = new ClaimsPrincipal(identity);
 
         await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
+        await _votingService.LogAuthenticationAsync("LOGIN_SUCCESS", normalizedEmail, user.Id);
 
         return RedirectToPage("/Index");
     }

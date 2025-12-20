@@ -1,0 +1,70 @@
+@page "{id}"
+@model Andrianov_6_Lab.Pages.Admin.EditSessionModel
+@{
+    ViewData["Title"] = "Edit Session";
+}
+
+<div class="container">
+    <h1>Edit Session</h1>
+
+    @if (TempData["Message"] != null)
+    {
+        <div class="alert alert-info">@TempData["Message"]</div>
+    }
+
+    @if (Model.Session != null)
+    {
+        <form method="post">
+            <input type="hidden" name="sessionId" value="@Model.Session.Id" />
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label" for="title">Title</label>
+                    <input class="form-control" id="title" name="title" value="@Model.Session.Title" required />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label" for="visibility">Visibility</label>
+                    <select class="form-select" id="visibility" name="visibility">
+                        <option value="public" selected="@(Model.Session.Visibility == "public")">Public</option>
+                        <option value="private" selected="@(Model.Session.Visibility == "private")">Private</option>
+                    </select>
+                </div>
+                <div class="col-md-12">
+                    <label class="form-label" for="description">Description</label>
+                    <textarea class="form-control" id="description" name="description" rows="3">@Model.Session.Description</textarea>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label" for="startAt">Start</label>
+                    <input type="datetime-local" class="form-control" id="startAt" name="startAt" value="@Model.Session.StartAt.ToLocalTime().ToString("yyyy-MM-ddTHH:mm")" required />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label" for="endAt">End</label>
+                    <input type="datetime-local" class="form-control" id="endAt" name="endAt" value="@Model.Session.EndAt.ToLocalTime().ToString("yyyy-MM-ddTHH:mm")" required />
+                </div>
+                <div class="col-md-4">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="anonymous" name="anonymous" checked="@Model.Settings.Anonymous" />
+                        <label class="form-check-label" for="anonymous">Anonymous</label>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="multiSelect" name="multiSelect" checked="@Model.Settings.MultiSelect" />
+                        <label class="form-check-label" for="multiSelect">Multi select</label>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label" for="maxChoices">Max choices</label>
+                    <input type="number" class="form-control" id="maxChoices" name="maxChoices" min="1" value="@Model.Settings.MaxChoices" />
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">Save</button>
+                    <a href="/Admin" class="btn btn-secondary">Back</a>
+                </div>
+            </div>
+        </form>
+    }
+    else
+    {
+        <p>Session not found.</p>
+    }
+</div>
