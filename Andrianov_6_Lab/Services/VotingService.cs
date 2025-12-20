@@ -76,6 +76,30 @@ public class VotingService
         return results.Select(MapToUserWithDetails).ToList();
     }
 
+    public async Task<List<Role>> GetRolesAsync()
+    {
+        const string sql = "SELECT id, code, name FROM voting.roles ORDER BY name";
+        var results = await _executor.ExecuteQueryAsync(sql);
+        return results.Select(r => new Role
+        {
+            Id = Guid.Parse(r["id"]?.ToString() ?? Guid.Empty.ToString()),
+            Code = r["code"]?.ToString() ?? string.Empty,
+            Name = r["name"]?.ToString() ?? string.Empty
+        }).ToList();
+    }
+
+    public async Task<List<UserStatus>> GetUserStatusesAsync()
+    {
+        const string sql = "SELECT id, code, name FROM voting.user_statuses ORDER BY name";
+        var results = await _executor.ExecuteQueryAsync(sql);
+        return results.Select(r => new UserStatus
+        {
+            Id = Guid.Parse(r["id"]?.ToString() ?? Guid.Empty.ToString()),
+            Code = r["code"]?.ToString() ?? string.Empty,
+            Name = r["name"]?.ToString() ?? string.Empty
+        }).ToList();
+    }
+
     public async Task<List<VotingSession>> GetAllSessionsAsync()
     {
         const string sql = "SELECT id, title, description, created_by, start_at, end_at, is_published, visibility, created_at FROM voting.voting_sessions ORDER BY created_at DESC";
@@ -112,6 +136,35 @@ public class VotingService
         }
     }
 
+    public async Task UpdateSessionAsync(Guid sessionId, string title, string? description, DateTime startAt, DateTime endAt, string visibility, bool anonymous, bool multiSelect, int maxChoices)
+    {
+        const string updateSessionSql = @"UPDATE voting.voting_sessions SET title=@title, description=@description, start_at=@startAt, end_at=@endAt, visibility=@visibility WHERE id=@id";
+        await _executor.ExecuteNonQueryAsync(updateSessionSql,
+            new NpgsqlParameter("title", title),
+            new NpgsqlParameter("description", (object?)description ?? DBNull.Value),
+            new NpgsqlParameter("startAt", startAt),
+            new NpgsqlParameter("endAt", endAt),
+            new NpgsqlParameter("visibility", visibility),
+            new NpgsqlParameter("id", sessionId));
+
+        var settingsParams = new[]
+        {
+            new NpgsqlParameter("p_session_id", sessionId),
+            new NpgsqlParameter("p_anonymous", anonymous),
+            new NpgsqlParameter("p_multi_select", multiSelect),
+            new NpgsqlParameter("p_max_choices", maxChoices)
+        };
+        await _executor.ExecuteProcedureAsync("voting.sp_upsert_settings", settingsParams);
+        await LogActionAsync(Guid.Empty, "UPDATE_SESSION", "voting_session", sessionId.ToString(), new { title, startAt, endAt, visibility, anonymous, multiSelect, maxChoices });
+    }
+
+    public async Task DeleteSessionAsync(Guid sessionId)
+    {
+        const string deleteSessionCascade = "DELETE FROM voting.voting_sessions WHERE id=@id";
+        await _executor.ExecuteNonQueryAsync(deleteSessionCascade, new NpgsqlParameter("id", sessionId));
+        await LogActionAsync(Guid.Empty, "DELETE_SESSION", "voting_session", sessionId.ToString());
+    }
+
     // Add candidate
     public async Task AddCandidateAsync(Guid sessionId, string candidateTypeCode, string fullName, string? description)
     {
@@ -124,6 +177,24 @@ public class VotingService
         };
         await _executor.ExecuteProcedureAsync("voting.sp_add_candidate", parameters);
         await LogActionAsync(Guid.Empty, "ADD_CANDIDATE", "candidate", null, new { sessionId, candidateTypeCode, fullName });
+    }
+
+    public async Task UpdateCandidateAsync(Guid candidateId, string candidateTypeCode, string fullName, string? description)
+    {
+        const string sql = @"UPDATE voting.candidates SET full_name=@fullName, description=@description, candidate_type_id=(SELECT id FROM voting.candidate_types WHERE code=@code LIMIT 1) WHERE id=@id";
+        await _executor.ExecuteNonQueryAsync(sql,
+            new NpgsqlParameter("fullName", fullName),
+            new NpgsqlParameter("description", (object?)description ?? DBNull.Value),
+            new NpgsqlParameter("code", candidateTypeCode),
+            new NpgsqlParameter("id", candidateId));
+        await LogActionAsync(Guid.Empty, "UPDATE_CANDIDATE", "candidate", candidateId.ToString(), new { candidateTypeCode, fullName });
+    }
+
+    public async Task DeleteCandidateAsync(Guid candidateId)
+    {
+        const string sql = "DELETE FROM voting.candidates WHERE id=@id";
+        await _executor.ExecuteNonQueryAsync(sql, new NpgsqlParameter("id", candidateId));
+        await LogActionAsync(Guid.Empty, "DELETE_CANDIDATE", "candidate", candidateId.ToString());
     }
 
     // Publish session
@@ -172,6 +243,24 @@ public class VotingService
         await _executor.ExecuteProcedureAsync("voting.sp_register_user", parameters);
     }
 
+    public async Task UpdateUserAsync(Guid userId, string fullName, Guid roleId, Guid statusId)
+    {
+        const string sql = "UPDATE voting.users SET full_name=@fullName, role_id=@roleId, status_id=@statusId, updated_at=now() WHERE id=@id";
+        await _executor.ExecuteNonQueryAsync(sql,
+            new NpgsqlParameter("fullName", fullName),
+            new NpgsqlParameter("roleId", roleId),
+            new NpgsqlParameter("statusId", statusId),
+            new NpgsqlParameter("id", userId));
+        await LogActionAsync(Guid.Empty, "UPDATE_USER", "user", userId.ToString(), new { fullName, roleId, statusId });
+    }
+
+    public async Task DeleteUserAsync(Guid userId)
+    {
+        const string sql = "DELETE FROM voting.users WHERE id=@id";
+        await _executor.ExecuteNonQueryAsync(sql, new NpgsqlParameter("id", userId));
+        await LogActionAsync(Guid.Empty, "DELETE_USER", "user", userId.ToString());
+    }
+
     public async Task MarkNotificationReadAsync(Guid notificationId, Guid userId)
     {
         var parameters = new[]
@@ -211,14 +300,18 @@ public class VotingService
 
     private async Task LogActionAsync(Guid userId, string action, string? entityType = null, string? entityId = null, object? meta = null)
     {
-        var metaJson = meta == null ? DBNull.Value : System.Text.Json.JsonSerializer.Serialize(meta);
         var parameters = new[]
         {
             new NpgsqlParameter("p_user_id", userId == Guid.Empty ? DBNull.Value : userId),
             new NpgsqlParameter("p_action", action),
             new NpgsqlParameter("p_entity_type", (object?)entityType ?? DBNull.Value),
             new NpgsqlParameter("p_entity_id", (object?)entityId ?? DBNull.Value),
-            new NpgsqlParameter("p_meta", metaJson)
+            new NpgsqlParameter("p_meta", NpgsqlTypes.NpgsqlDbType.Jsonb)
+            {
+                Value = meta == null
+                    ? DBNull.Value
+                    : System.Text.Json.JsonSerializer.Serialize(meta)
+            }
         };
         await _executor.ExecuteProcedureAsync("voting.sp_log_action", parameters);
     }

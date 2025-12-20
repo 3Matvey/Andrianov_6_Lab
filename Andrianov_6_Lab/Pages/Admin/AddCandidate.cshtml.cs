@@ -19,8 +19,14 @@ public class AddCandidateModel : PageModel
     public VotingSession? Session { get; set; }
     public List<CandidateType> CandidateTypes { get; set; } = new();
 
+    private IActionResult? ForbidIfNotAdmin()
+    {
+        return User.IsInRole("ADMIN") ? null : Forbid();
+    }
+
     public async Task<IActionResult> OnGetAsync(Guid id)
     {
+        if (ForbidIfNotAdmin() is IActionResult forbidden) return forbidden;
         Session = await _votingService.GetSessionWithCandidatesAsync(id, includeUnpublished: true);
         if (Session == null)
         {
@@ -32,6 +38,7 @@ public class AddCandidateModel : PageModel
 
     public async Task<IActionResult> OnPostAsync(Guid id, string fullName, string description, string candidateType)
     {
+        if (ForbidIfNotAdmin() is IActionResult forbidden) return forbidden;
         try
         {
             await _votingService.AddCandidateAsync(id, candidateType, fullName, description);
@@ -46,6 +53,7 @@ public class AddCandidateModel : PageModel
 
     public async Task<IActionResult> OnPostUpdateAsync(Guid id, Guid candidateId, string fullName, string description, string candidateType)
     {
+        if (ForbidIfNotAdmin() is IActionResult forbidden) return forbidden;
         await _votingService.UpdateCandidateAsync(candidateId, candidateType, fullName, description);
         TempData["Message"] = "Candidate updated.";
         return RedirectToPage(new { id });
@@ -53,6 +61,7 @@ public class AddCandidateModel : PageModel
 
     public async Task<IActionResult> OnPostDeleteAsync(Guid id, Guid candidateId)
     {
+        if (ForbidIfNotAdmin() is IActionResult forbidden) return forbidden;
         await _votingService.DeleteCandidateAsync(candidateId);
         TempData["Message"] = "Candidate removed.";
         return RedirectToPage(new { id });
