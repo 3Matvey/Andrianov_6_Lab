@@ -37,6 +37,9 @@
                         @if (User?.Identity?.IsAuthenticated == true)
                         {
                             <li class="nav-item">
+                                <a class="nav-link text-dark" asp-area="" asp-page="/Notifications/Index">Notifications</a>
+                            </li>
+                            <li class="nav-item">
                                 <a class="nav-link text-dark" asp-area="" asp-page="/Account/Logout">Logout (@User.Identity.Name)</a>
                             </li>
                         }

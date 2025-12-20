@@ -18,6 +18,7 @@ public class AdminModel : PageModel
 
     private IActionResult? ForbidIfNotAdmin()
     {
+        if (!(User?.Identity?.IsAuthenticated ?? false)) return Challenge();
         return User.IsInRole("ADMIN") ? null : Forbid();
     }
 
@@ -26,13 +27,14 @@ public class AdminModel : PageModel
     public List<Role> Roles { get; set; } = new();
     public List<UserStatus> Statuses { get; set; } = new();
 
-    public async Task OnGetAsync()
+    public async Task<IActionResult> OnGetAsync()
     {
-        if (ForbidIfNotAdmin() is IActionResult forbidden) return;
+        if (ForbidIfNotAdmin() is IActionResult forbidden) return forbidden;
         Sessions = await _votingService.GetAllSessionsAsync();
         Users = await _votingService.GetAllUsersAsync();
         Roles = await _votingService.GetRolesAsync();
         Statuses = await _votingService.GetUserStatusesAsync();
+        return Page();
     }
 
     public async Task<IActionResult> OnPostCreateSessionAsync(string title, string description, DateTime startAt, DateTime endAt, string visibility, bool anonymous, bool multiSelect, int maxChoices)

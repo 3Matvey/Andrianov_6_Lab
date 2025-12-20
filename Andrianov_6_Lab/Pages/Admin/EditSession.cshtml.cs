@@ -21,6 +21,7 @@ public class EditSessionModel : PageModel
 
     private IActionResult? ForbidIfNotAdmin()
     {
+        if (!(User?.Identity?.IsAuthenticated ?? false)) return Challenge();
         return User.IsInRole("ADMIN") ? null : Forbid();
     }
 

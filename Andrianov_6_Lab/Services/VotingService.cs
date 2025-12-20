@@ -160,8 +160,19 @@ public class VotingService
 
     public async Task DeleteSessionAsync(Guid sessionId)
     {
-        const string deleteSessionCascade = "DELETE FROM voting.voting_sessions WHERE id=@id";
-        await _executor.ExecuteNonQueryAsync(deleteSessionCascade, new NpgsqlParameter("id", sessionId));
+        // Remove related votes, candidates, settings and results explicitly before dropping the session itself
+        const string deleteVotesSql = @"DELETE FROM voting.votes v USING voting.candidates c WHERE v.candidate_id = c.id AND c.session_id = @id";
+        const string deleteCandidatesSql = "DELETE FROM voting.candidates WHERE session_id=@id";
+        const string deleteSettingsSql = "DELETE FROM voting.voting_settings WHERE session_id=@id";
+        const string deleteResultsSql = "DELETE FROM voting.results WHERE session_id=@id";
+        const string deleteSessionSql = "DELETE FROM voting.voting_sessions WHERE id=@id";
+
+        var idParam = new NpgsqlParameter("id", sessionId);
+        await _executor.ExecuteNonQueryAsync(deleteVotesSql, idParam);
+        await _executor.ExecuteNonQueryAsync(deleteCandidatesSql, idParam);
+        await _executor.ExecuteNonQueryAsync(deleteSettingsSql, idParam);
+        await _executor.ExecuteNonQueryAsync(deleteResultsSql, idParam);
+        await _executor.ExecuteNonQueryAsync(deleteSessionSql, idParam);
         await LogActionAsync(Guid.Empty, "DELETE_SESSION", "voting_session", sessionId.ToString());
     }
 
@@ -218,6 +229,11 @@ public class VotingService
         const string sql = "SELECT id, user_id, type, title, body, is_read, created_at FROM voting.notifications WHERE user_id = @userId ORDER BY created_at DESC";
         var results = await _executor.ExecuteQueryAsync(sql, new NpgsqlParameter("userId", userId));
         return results.Select(MapToNotification).ToList();
+    }
+
+    public async Task LogAuthenticationAsync(string action, string email, Guid? userId = null, object? meta = null)
+    {
+        await LogActionAsync(userId ?? Guid.Empty, action, "auth", null, new { email, meta });
     }
 
     public async Task<List<CandidateType>> GetCandidateTypesAsync()

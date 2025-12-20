@@ -1,0 +1,41 @@
+@page
+@model Andrianov_6_Lab.Pages.Notifications.IndexModel
+@{
+    ViewData["Title"] = "Уведомления";
+}
+
+<h2 class="mb-4">Уведомления</h2>
+
+@if (!Model.Notifications.Any())
+{
+    <div class="alert alert-info">Пока нет уведомлений.</div>
+}
+else
+{
+    <div class="list-group">
+        @foreach (var notification in Model.Notifications)
+        {
+            <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-start @(notification.IsRead ? "" : "list-group-item-warning")">
+                <div class="ms-2 me-auto">
+                    <div class="fw-bold">@notification.Title</div>
+                    <div class="text-muted small">@notification.CreatedAt.ToString("g") (@notification.Type)</div>
+                    @if (!string.IsNullOrWhiteSpace(notification.Body))
+                    {
+                        <p class="mb-1">@notification.Body</p>
+                    }
+                </div>
+                @if (!notification.IsRead)
+                {
+                    <form method="post" asp-page-handler="MarkRead" class="ms-3">
+                        <input type="hidden" name="id" value="@notification.Id" />
+                        <button type="submit" class="btn btn-sm btn-outline-primary">Отметить прочитанным</button>
+                    </form>
+                }
+                else
+                {
+                    <span class="badge bg-light text-dark border">Прочитано</span>
+                }
+            </div>
+        }
+    </div>
+}
